@@ -1,7 +1,7 @@
 import React, {useContext,useState} from 'react';
 import './App.css';
-import {Input, Button, Icon, Tabs} from 'antd'
-import {Bar, Line} from 'react-chartjs-2'
+import {Input, Button, Tabs} from 'antd'
+import {Bar, Line, defaults} from 'react-chartjs-2'
 import * as moment from 'moment'
 import {Link} from "react-scroll"
 import { render } from 'react-dom'
@@ -9,31 +9,22 @@ import IosArrowDropdownCircle from 'react-ionicons/lib/IosArrowDropdownCircle'
 
 const context = React.createContext()
 const { TabPane } = Tabs;
+defaults.global.maintainAspectRatio = false
 
 function App() {
   const [state, setState] = useState({
     searchTerm:''
   })
-
   // const [showResult, setShowResult] = useState(false);
 
-  return <context.Provider value = {{
+  return <context.Provider value={{
     ...state,
     set: v=> setState(current => {
       return {...current, ...v}
-      })
+    })
   }}>
     <div className="App">
-      <Header />   
-      {/* <Tabs className="tabs">
-        <TabPane tab="Hourly Temperature" key="1">
-          <Body />
-        </TabPane>
-        <TabPane tab="Daily Temperature" key="2">
-          <Body2 />
-        </TabPane>
-      </Tabs> */}
-      {/* <Picture /> */}
+      <Header />
     </div>
   </context.Provider>
 }
@@ -44,10 +35,10 @@ function Header() {
   const [showButton, setShowButton] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
-  return <div><header className="App-body">
+  return <div><header className="App-body2">
     <link href="https://fonts.googleapis.com/css?family=Reenie+Beanie&display=swap" rel="stylesheet"></link>
     <div className="city">
-      <h1>City</h1>
+      <h1>City</h1>     
       <h6>A city is its skyline, its weather, and its people.<br/></h6>
     </div>
     <div className="searching">
@@ -57,29 +48,30 @@ function Header() {
         onChange={e => ctx.set({searchTerm:e.target.value})}
         placeholder="Search for a city"
         onKeyPress={e=>{
-          if (e.key === 'Enter' && searchTerm) search(ctx)
+          if (e.key === 'Enter' && searchTerm) {search(ctx);setShowButton(true);}
         }}
       />
       <Button className="button" shape="circle" icon="search" 
-        onClick={()=> {search(ctx);setShowButton(true);}} disabled={!searchTerm} />
+        onClick={() => {search(ctx);setShowButton(true);}} disabled={!searchTerm} />
     </div>
-    {showButton &&
+    {showButton && 
     <div>
       <Link
+        onClick={() => {setShowButton(false);setShowResult(true);}}
         activeClass="active"
         to="result"
         spy={true}
         smooth={true}
         offset={-70}
         duration={500}
-        onClick={() => {setShowButton(false);setShowResult(true);}}
       >
         <IosArrowDropdownCircle className="iconwrap" fontSize="60px" color="white" beat={true} id="icon"/>
       </Link>
     </div>}
   </header>
+  <div id="result">
   {showResult &&
-  <Tabs className="tabs" id="tab">
+    <Tabs className="tabs" id="tab">
     <TabPane tab="Hourly Temperature" key="1">
       <Body />
     </TabPane>
@@ -87,15 +79,18 @@ function Header() {
       <Body2 />
     </TabPane>
   </Tabs>
-  }</div>
+  }
+  </div>
+  </div>
 }
 
-function Body() {
+function Body(){
   const ctx = useContext(context)
   const {error, weather, mode} = ctx
   console.log(weather)
   let summary
   let data
+  let options
 
   if (weather) {
     console.log(weather)
@@ -103,7 +98,7 @@ function Body() {
       labels:weather['hourly'].data.map(d=> {let format = 'dd hh:mm'
       return moment(d.time*1000).format(format)}),
       datasets: [{
-        label: 'Hourly Temperature',
+        label: 'Hourly Temperature (ºF)',
         data: weather.hourly.data.map(d=>d.temperature),
         borderColor: 'rgba(252,205,205)',
         hoverBackgroundColor: 'rgba(235,166,166)',
@@ -111,33 +106,46 @@ function Body() {
       }]
     }
     summary = weather['hourly'].summary
+    options = {
+      title: {
+          display: true,
+          text: '"' + summary + '"',
+          fontSize: 18,
+          fontColor: '#FFFFFF',
+          fontStyle: 'italic',
+      }
+    } 
   }
 
-  // <div className="hourly-summary">{summary}</div>
+  // div className="hourly-summary">{summary}</div>
 
   return <div className="App-body">
     {error && <div className="error">{error}</div>}
     {data && <div className="hourly-data">
-      <Line data={data}
-        width={600} height={300}
-      />
+      <article className="canvas-container">
+        <Line data={data}
+          options={options}
+        />
+      </article>
     </div>}
   </div>
 }
 
-function Body2() {
+function Body2(){
   const ctx = useContext(context)
   const {error, weather, mode} = ctx
   console.log(weather)
+  let summary
   let data
+  let options
 
   if (weather) {
     console.log(weather)
     data = {
-      labels:weather['daily'].data.map(d => {let format = 'ddd'
+      labels:weather['daily'].data.map(d=> {let format = 'ddd'
       return moment(d.time*1000).format(format)}),
       datasets: [{
-        label: 'Daily Temperature',
+        label: 'Daily Temperature (ºF)',
         data: weather.daily.data.map(d=>(d.temperatureHigh+d.temperatureLow)/2),
         backgroundColor: 'rgba(252,205,205)',
         borderColor: 'rgba(252,205,205)',
@@ -145,21 +153,29 @@ function Body2() {
         hoverBorderColor: 'rgba(235,166,166)',
       }]
     }
+    summary = weather['daily'].summary
+    options = {
+      title: {
+          display: true,
+          text: '"' + summary + '"',
+          fontSize: 18,
+          fontColor: '#FFFFFF',
+          fontStyle: 'italic',
+      }
+    }
   } 
 
   return <div className="App-body">
     {error && <div className="error">{error}</div>}
-    {data && <div>
+    {data && <div className="daily-data">
+      <article className="canvas-container">
       <Bar data={data}
-        width={600} height={300}
+        options={options}
       />
+      </article>
     </div>}
   </div>
 }
-
-// function Picture() {
-//   const ctx = useContext(context)
-// }
 
 async function search({searchTerm, set}){
   try {
@@ -198,7 +214,5 @@ async function searchFlickr({searchTerm, set}){
     set({error: e.message})
   }
 }
-
-// flickrapi = 'b0334c68457d53a0c4bc349037b6a47a'
 
 export default App;
