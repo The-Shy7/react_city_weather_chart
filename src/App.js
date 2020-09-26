@@ -1,13 +1,14 @@
 import React, {useContext,useState} from 'react';
 import './App.css';
-import {Input, Button, Icon} from 'antd'
-import {Bar} from 'react-chartjs-2'
+import {Input, Button, Icon, Tabs} from 'antd'
+import {Bar, Line} from 'react-chartjs-2'
 import * as moment from 'moment'
 import {Link} from "react-scroll"
 import { render } from 'react-dom'
 import IosArrowDropdownCircle from 'react-ionicons/lib/IosArrowDropdownCircle'
 
 const context = React.createContext()
+const { TabPane } = Tabs;
 
 function App() {
   const [state, setState] = useState({
@@ -24,8 +25,15 @@ function App() {
   }}>
     <div className="App">
       <Header />   
-      <Body /> 
-      <Body2 />  
+      {/* <Tabs className="tabs">
+        <TabPane tab="Hourly Temperature" key="1">
+          <Body />
+        </TabPane>
+        <TabPane tab="Daily Temperature" key="2">
+          <Body2 />
+        </TabPane>
+      </Tabs> */}
+      {/* <Picture /> */}
     </div>
   </context.Provider>
 }
@@ -34,8 +42,9 @@ function Header() {
   const ctx = useContext(context)
   const {searchTerm} = ctx
   const [showButton, setShowButton] = useState(false);
+  const [showResult, setShowResult] = useState(false);
 
-  return <header className="App-body">
+  return <div><header className="App-body">
     <link href="https://fonts.googleapis.com/css?family=Reenie+Beanie&display=swap" rel="stylesheet"></link>
     <div className="city">
       <h1>City</h1>
@@ -63,12 +72,22 @@ function Header() {
         smooth={true}
         offset={-70}
         duration={500}
-        onClick={()=> setShowButton(false)}
+        onClick={() => {setShowButton(false);setShowResult(true);}}
       >
         <IosArrowDropdownCircle className="iconwrap" fontSize="60px" color="white" beat={true} id="icon"/>
       </Link>
     </div>}
   </header>
+  {showResult &&
+  <Tabs className="tabs" id="tab">
+    <TabPane tab="Hourly Temperature" key="1">
+      <Body />
+    </TabPane>
+    <TabPane tab="Daily Temperature" key="2">
+      <Body2 />
+    </TabPane>
+  </Tabs>
+  }</div>
 }
 
 function Body() {
@@ -86,7 +105,6 @@ function Body() {
       datasets: [{
         label: 'Hourly Temperature',
         data: weather.hourly.data.map(d=>d.temperature),
-        backgroundColor: 'rgba(252,205,205)',
         borderColor: 'rgba(252,205,205)',
         hoverBackgroundColor: 'rgba(235,166,166)',
         hoverBorderColor: 'rgba(235,166,166)',
@@ -97,10 +115,10 @@ function Body() {
 
   // <div className="hourly-summary">{summary}</div>
 
-  return <div className="App-body" id="result">
+  return <div className="App-body">
     {error && <div className="error">{error}</div>}
     {data && <div className="hourly-data">
-      <Bar data={data}
+      <Line data={data}
         width={600} height={300}
       />
     </div>}
@@ -139,6 +157,10 @@ function Body2() {
   </div>
 }
 
+// function Picture() {
+//   const ctx = useContext(context)
+// }
+
 async function search({searchTerm, set}){
   try {
     console.log(searchTerm)
@@ -170,7 +192,8 @@ async function searchFlickr({searchTerm, set}){
     console.log(searchTerm)
     const term = searchTerm
     set({error:''}) 
-    const flickrurl = ``
+    const key = 'b0334c68457d53a0c4bc349037b6a47a'
+    const url = `https://api.flickr.com/services/rest/`
   } catch(e) {
     set({error: e.message})
   }
